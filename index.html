@@ -1,0 +1,38 @@
+<html>
+	<head>
+		<script language='javascript'>
+				var url = "https://dictionary.yandex.net/api/v1/dicservice/lookup?key=dict.1.1.20170318T103102Z.6bf3bd6d3840a4a3.e5ee46ccab2ac06111418309c4034544d15590f4&lang=en-ru&text=time";
+				var xhr = new XMLHttpRequest();
+
+				xhr.open('GET', url, false);
+
+				xhr.send();
+				if (xhr.status != 200) {
+				  // обработать ошибку
+				  alert( xhr.status + ': ' + xhr.statusText ); // пример вывода: 404: Not Found
+				} else {
+					var xmlReq = xhr.responseXML;
+					var enWord = xmlReq.getElementsByTagName("text")[0].innerHTML;
+					var ruWord = xmlReq.getElementsByTagName("text")[1].innerHTML;
+					console.log(enWord + " - " + ruWord);
+				  // вывести результат
+				  //alert( xhr.responseText); // responseText -- текст ответа.
+				  //А мы выведем текст
+				  //var translate = xhr.responseXML.evaluate("//def//tr[@gen='cp']//text",xhr,null,XPathResult.ANY_TYPE,null);
+				  //var translate = xhr.responseXML.getElementByTag("text");
+				  //alert(translate);
+				  //document.write(xhr.responseXML);//.getElementById("dd").innerHTML = xhr.responseText;
+				}
+
+					
+		</script>
+	
+	</head>
+	<body>
+	<span hidden>dict.1.1.20170318T103102Z.6bf3bd6d3840a4a3.e5ee46ccab2ac06111418309c4034544d15590f4</span>
+	<div id="dd">
+	Here are testing text
+	</div>
+	</body>
+
+</html>

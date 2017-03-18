@@ -1,0 +1,19 @@
+{
+    "manifest_version": 2,
+ 
+    "name": "Translate",
+    "description": "For translate",
+    "version": "1.0",
+ 
+    "browser_action": {
+        "default_icon": "icon.png",
+        "default_popup": "popup.html"
+    },
+	"permissions": [
+		"https://dictionary.yandex.net/*"
+	],
+
+    "permissions": [
+        "activeTab"
+    ]
+}

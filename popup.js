@@ -6,13 +6,32 @@ document.addEventListener('DOMContentLoaded', function () {
 
 function getStart()
 {
+	/*
 	var d = document.myForm.sub;
 	d.addEventListener('click', function () {
   getTranslate();
 });
 	document.addEventListener('select', function () {
   getSelectionText();
-});
+  });
+  */
+  
+  document.myForm.myText.addEventListener('input', function ()
+  {
+	  /*
+	  e = window.event;
+	  if (e.keyCode == 13)
+	  {
+		  getTranslate();
+	  }
+	  */
+	  getTranslate();
+  });
+  
+  document.addEventListener('submit', function()
+  {
+	 event.preventDefault();
+  });
 
 }
 

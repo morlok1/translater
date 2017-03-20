@@ -1,0 +1,10 @@
+body {height:80px; width:250px;}
+
+a {text-decoration: none; color:black;}
+a:hover {text-decoration: underline;}
+
+#extension {position:absolute; top:0px;}
+#translateForm {position:absolute; top:0px; font-size:15pt;}
+#translateResult {position:absolute; top:40px; font-family:arial black}
+#line {position:absolute; top:60px; width:250px;}
+#copyrightYandex {position:absolute; top:75px; text-decoration:none; font-size:9pt; width:250px;}

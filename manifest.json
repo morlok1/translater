@@ -10,15 +10,6 @@
         "default_popup": "popup.html"
     },
 	
-
-	"content_scripts": [
-    {
-    "matches": ["*://*/*"],
-      "js": ["buildIn.js"]
-    }
-  ],
-  
-	"web_accessible_resources" : ["BackgroundTranslate.js"],
 	
 	"permissions": [
 		"https://dictionary.yandex.net/*"
@@ -27,11 +18,8 @@
     "permissions": [
         "activeTab"
     ],
+	
 	  "commands": {
-    "toggle-feature": {
-      "suggested_key": { "default": "Ctrl+Shift+Y" },
-      "description": "Send a 'toggle-feature' event to the extension"
-    },
     "_execute_browser_action": {
       "suggested_key": {
         "default": "Ctrl + Space"

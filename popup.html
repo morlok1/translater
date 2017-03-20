@@ -2,13 +2,27 @@
 
 <html>
 	<head>
+	<link href="popup.css" rel="stylesheet">
 		<script src='popup.js'></script>
+		
 	</head>
 	<body>
-	<form name='myForm' id='myForm' onsubmit="return false">
-		<input type='text' id='myText' name='myText' autofocus autocomplete='off'>
-	</form>
-	<div id='res'></div>
+		<div id='extension'>
+			<div id='translateForm'>
+				<form name='translateForm' onsubmit='return false'>
+					<input type='text' id='translateText' name='translateText' autofocus autocomplete='off'>
+				</form>
+			</div>
+			<div id='translateResult'></div>
+			<div id='line'>
+				<hr>
+			</div>
+			<div id='copyrightYandex'>
+				<a target='_blank' href='http://translate.yandex.ru/'>
+					Переведено сервисом «Яндекс.Переводчик»
+				</a>
+			</div>
+		</div>
 	</body>
 
 </html>

@@ -1,4 +1,5 @@
 <?php
+//Подключаемся к базе данных
 $host = "localhost";
 $user = "u128217053_m";
 $pass = "Lfnfvjtqcvthnb";
@@ -10,26 +11,21 @@ mysql_query('SET NAMES UTF8');
 $enWord_g = $_POST['en'];
 $ruWord_g = $_POST['ru'];
 
-$query = "INSERT INTO example_table (ex) VALUES (1)";
+//Сначала необходимо сделать проверку на существование данной пары перевода
+$query = "SELECT id FROM translate_table WHERE enWord='$enWord_g' and ruWord='$ruWord_g'";
+$sql = mysql_query($query);
+$bool = 0;
+while ($row = mysql_fetch_object($sql))
+	$bool++;
 
-mysql_query($query);
+//Если пара перевода новая
+if ($bool == 0)
+{
+	$query = "INSERT INTO translate_table (enWord, ruWord, sync) VALUES ('$enWord_g', '$ruWord_g', 0)";
+	mysql_query($query);
+}
 
-$query = "INSERT INTO translate_table (enWord, ruWord) VALUES ('$enWord_g', '$ruWord_g')";
-
-if (mysql_query($query))
-	echo "O`kay...";
-else
-	echo "Fuck...";
-
-header('Access-Control-Allow-Origin: http://morlok1.esy.es');
-header('Content-type: text/plain');
-return $enWord;
-
-/*
-$enWord_g = $_GET['en'];
-$ruWord_g = $_GET['ru'];
-
-
-*/
+//header('Access-Control-Allow-Origin: http://morlok1.esy.es');
+//header('Content-type: text/plain');
 ?>
 

@@ -17,6 +17,10 @@
 #include <QTextStream>
 #include <QIODevice>
 
+//База данных
+#include <QtSql>
+#include <QDebug>
+
 class set : public QWidget
 {
     Q_OBJECT
@@ -32,12 +36,16 @@ class set : public QWidget
     //Сеть
     QNetworkAccessManager* qnam;
     QNetworkReply *reply;
+    
+    QSqlDatabase dbase; //База данных
+
 
 public:
     set(QWidget *parent = 0);
     ~set();
 
     QString getFormatString(QString);
+    void getDataFromDatabases();
 
 public slots:
     void startSync();

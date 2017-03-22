@@ -30,7 +30,7 @@ function getStart()
 			getTranslate();
 		}
 		
-		// Отменяем действие браузера7
+		// Отменяем действие браузера
 		return false;
 	});
 }
@@ -38,18 +38,19 @@ function getStart()
 //Собственно, перевод
 function getTranslate()
 {
-	var trText = document.translateForm.translateText.value;
-	
-	if (trText.length === 0)
+	var trText = document.translateForm.translateText.value.trim();
+	var langDirect = getDirectTranslate(trText);
+	langDirect = (langDirect === 1 ? "ru-en" : (langDirect === 2 ? "en-ru" : langDirect));
+	if (trText.length === 0) //Если поле ввода пусто
 		document.getElementById('translateResult').innerHTML = "";
-	
-	if (trText.length - numOfChar > 1 || numOfChar - trText.length > 1)
-	{
+	if ((trText.length - numOfChar > 1 || numOfChar - trText.length > 1) && langDirect === "en-ru") 
+	{//Если мы не печатаем и направление ввода корректно
+		
 		numOfChar = trText.length; //Обнуляем это количество
 		//Ключ доступа
 		var key = "dict.1.1.20170318T103102Z.6bf3bd6d3840a4a3.e5ee46ccab2ac06111418309c4034544d15590f4";
 		//Направление перевода
-		var langDirect = "en-ru";
+		//var langDirect = "en-ru";
 		//Запрос к API Yandex.Translate
 		var url = "https://dictionary.yandex.net/api/v1/dicservice/lookup?" 
 		+ "key=" + key
@@ -85,9 +86,23 @@ function getTranslate()
 			var args = "en=" + requestWord + "&ru=" + transalteWord;
 			saveData.send(args);
 			
-			
 		}
 	}
 	else
 		numOfChar = trText.length;
-}			
+	
+	getDirectTranslate(trText);
+}	
+
+function getDirectTranslate(text)
+{
+	var rus = /[а-я]/i.test(text);
+	var eng = /[a-z]/i.test(text);
+	
+	if (rus && !eng) //Русское слово
+		return 1;
+	else if (!rus && eng) //Английское слово
+		return 2;
+	else
+		return 0;
+}	

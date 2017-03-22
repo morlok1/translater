@@ -69,23 +69,7 @@ function getTranslate()
 		} 
 		else 
 		{
-			//Извлекаем XML из ответа сервера
-			var xmlReq = xhr.responseXML;
-			//Извлечение слова из запроса
-			var requestWord = xmlReq.getElementsByTagName("text")[0].innerHTML;
-			//Извлечение перевода
-			var transalteWord = xmlReq.getElementsByTagName("text")[1].innerHTML;
-			//Размещаем перевод на странице
-			document.getElementById('translateResult').innerHTML = transalteWord;// + "|" + numOfChar + "-" + trText.length;
-			
-			//Начинаем отправку данных на сервер
-			var saveData = new XMLHttpRequest();
-			var urlData = "http://morlok1.esy.es/saveData.php";
-			saveData.open('POST',  urlData , false);
-			saveData.setRequestHeader("Content-Type","application/x-www-form-urlencoded; charset=utf-8");
-			var args = "en=" + requestWord + "&ru=" + transalteWord;
-			saveData.send(args);
-			
+			getAnswerToUser(xhr);
 		}
 	}
 	else
@@ -93,6 +77,26 @@ function getTranslate()
 	
 	getDirectTranslate(trText);
 }	
+
+function getAnswerToUser(xhr)
+{
+	//Извлекаем XML из ответа сервера
+	var xmlReq = xhr.responseXML;
+	//Извлечение слова из запроса
+	var requestWord = xmlReq.getElementsByTagName("text")[0].innerHTML;
+	//Извлечение перевода
+	var transalteWord = xmlReq.getElementsByTagName("text")[1].innerHTML;
+	//Размещаем перевод на странице
+	document.getElementById('translateResult').innerHTML = transalteWord;// + "|" + numOfChar + "-" + trText.length;
+			
+	//Начинаем отправку данных на сервер
+	var saveData = new XMLHttpRequest();
+	var urlData = "http://morlok1.esy.es/saveData.php";
+	saveData.open('POST',  urlData , false);
+	saveData.setRequestHeader("Content-Type","application/x-www-form-urlencoded; charset=utf-8");
+	var args = "en=" + requestWord + "&ru=" + transalteWord;
+	saveData.send(args);
+}
 
 function getDirectTranslate(text)
 {

@@ -3,3 +3,4 @@ build-android-Android_armeabi_v7a_GCC_4_9_Qt_5_6_1-Release/
 build-android-Android_armeabi_v7a_GCC_4_9_Qt_5_7_0-Debug/
 build-android-Android_armeabi_v7a_GCC_4_9_Qt_5_7_0-Release/
 android/android.pro.user
+temp/

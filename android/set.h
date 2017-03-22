@@ -5,6 +5,7 @@
 #include <QListWidget>
 #include <QPushButton>
 #include <QGridLayout>
+#include <QLabel>
 
 //Работа с сетью
 #include <QUrl>
@@ -20,6 +21,7 @@
 //База данных
 #include <QtSql>
 #include <QDebug>
+#include <ctime>
 
 class set : public QWidget
 {
@@ -30,7 +32,9 @@ class set : public QWidget
     //Интерфейс
     //Тестирование
     QPushButton * getSync;
-    QListWidget * words;
+    //QListWidget * words;
+    QPushButton * getWord;
+    QLabel * word;
 
 
     //Сеть
@@ -40,6 +44,11 @@ class set : public QWidget
     QSqlDatabase dbase; //База данных
 
 
+    //Данные
+    QString enWord;
+    QString ruWord;
+    int numbOfWord;
+    bool state;
 public:
     set(QWidget *parent = 0);
     ~set();
@@ -51,6 +60,7 @@ public slots:
     void startSync();
     void writeToFile();
     void syncWithServer();
+    void getWordAction();
 };
 
 #endif // SET_H

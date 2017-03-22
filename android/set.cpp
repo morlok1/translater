@@ -7,14 +7,21 @@ set::set(QWidget *parent) : QWidget(parent)
     getSync = new QPushButton(this);
     getSync->setText("Синхронизировать");
 
-    words = new QListWidget(this);
+    getWord = new QPushButton(this);
+    getWord->setText("Слово");
+
+    word = new QLabel(this);
+    //words = new QListWidget(this);
 
     grid->addWidget(getSync, 0,0);
-    grid->addWidget(words,1,0);
+    grid->addWidget(getWord,1,0);
+    grid->addWidget(word,2,0);
 
     setLayout(grid);
 
     QWidget::connect(getSync, SIGNAL (clicked()), this, SLOT (startSync()));
+    QWidget::connect(getWord, SIGNAL (clicked()), this, SLOT (getWordAction()));
+    QWidget::connect(getWord, SIGNAL (clicked()), this, SLOT (getTranslateAction()));
 
     //Сеть
     qnam = new QNetworkAccessManager();
@@ -22,12 +29,12 @@ set::set(QWidget *parent) : QWidget(parent)
     //База данных
     dbase = QSqlDatabase::addDatabase("QSQLITE"); //Создаем базу данных
 
-    dbase.setDatabaseName("extremist.sqlite");//Подключаемся
+    dbase.setDatabaseName("words.sqlite");//Подключаемся
     if (!dbase.open()) //Открываем
         qDebug() << "No.";
 
     QSqlQuery a_query;
-
+    //Создаем таблицу, если её еще не существует
     QString s = "CREATE TABLE word_table ("
             "id integer PRIMARY KEY NOT NULL, "
             "enWord VARCHAR(255), "
@@ -39,7 +46,18 @@ set::set(QWidget *parent) : QWidget(parent)
         qDebug() << "Таблица со словами уже существует";
     }
 
-    getDataFromDatabases();
+
+    numbOfWord = 0;
+    //Посчитаем  количество слов в словаре
+    s = "SELECT * FROM word_table";
+    b = a_query.exec(s);
+    if (!b)
+        qDebug() << "Не пошло считываие.";
+    QSqlRecord rec = a_query.record();
+    while (a_query.next())
+        numbOfWord++;
+
+    state = true;
 }
 
 set::~set()
@@ -91,13 +109,11 @@ void set::syncWithServer()
                     .arg(0);
             if (a_query.exec(s))
             {
+                numbOfWord++;
                 qDebug() << "Добавлена новая пара слов в базу данных:" + ruLine + "---"+enLine;
             }
-            //words->addItem(ruLine + "---" + enLine);
         }
     }
-    words->clear();
-    getDataFromDatabases();
 }
 
 QString set::getFormatString(QString str)
@@ -106,6 +122,8 @@ QString set::getFormatString(QString str)
     return str;
 }
 
+
+//Этот метод устарел
 void set::getDataFromDatabases()
 {
     QString s = "SELECT * FROM word_table";
@@ -119,6 +137,37 @@ void set::getDataFromDatabases()
     {
         res = a_query.value(rec.indexOf("enWord")).toString() + "---";
         res += a_query.value(rec.indexOf("ruWord")).toString();
-        words->addItem(res);
+        //words->addItem(res);
     }
 }
+
+void set::getWordAction()
+{
+    srand(time(NULL));
+
+    if (state)
+    {
+    int numberOfWord = (rand()%numbOfWord)+1;
+    QString s = "SELECT * FROM word_table WHERE id=" + QString::number(numberOfWord);
+    QSqlQuery a_query;
+    bool b = a_query.exec(s);
+    if (!b)
+        qDebug() << "Не пошло считываие.";
+    QSqlRecord rec = a_query.record();
+    while (a_query.next())
+    {
+        enWord = a_query.value(rec.indexOf("enWord")).toString();
+        ruWord = a_query.value(rec.indexOf("ruWord")).toString();
+    }
+    word->setText(enWord);
+    getWord->setText("Перевод");
+    state = false;
+    }
+    else
+    {
+        word->setText(ruWord);
+        getWord->setText("Слово");
+        state = true;
+    }
+}
+

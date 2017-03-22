@@ -21,7 +21,6 @@ set::set(QWidget *parent) : QWidget(parent)
 
     QWidget::connect(getSync, SIGNAL (clicked()), this, SLOT (startSync()));
     QWidget::connect(getWord, SIGNAL (clicked()), this, SLOT (getWordAction()));
-    QWidget::connect(getWord, SIGNAL (clicked()), this, SLOT (getTranslateAction()));
 
     //Сеть
     qnam = new QNetworkAccessManager();
@@ -53,7 +52,6 @@ set::set(QWidget *parent) : QWidget(parent)
     b = a_query.exec(s);
     if (!b)
         qDebug() << "Не пошло считываие.";
-    QSqlRecord rec = a_query.record();
     while (a_query.next())
         numbOfWord++;
 
@@ -144,30 +142,34 @@ void set::getDataFromDatabases()
 void set::getWordAction()
 {
     srand(time(NULL));
-
-    if (state)
+    if (numbOfWord != 0)
     {
-    int numberOfWord = (rand()%numbOfWord)+1;
-    QString s = "SELECT * FROM word_table WHERE id=" + QString::number(numberOfWord);
-    QSqlQuery a_query;
-    bool b = a_query.exec(s);
-    if (!b)
-        qDebug() << "Не пошло считываие.";
-    QSqlRecord rec = a_query.record();
-    while (a_query.next())
-    {
-        enWord = a_query.value(rec.indexOf("enWord")).toString();
-        ruWord = a_query.value(rec.indexOf("ruWord")).toString();
-    }
-    word->setText(enWord);
-    getWord->setText("Перевод");
-    state = false;
+        if (state)
+        {
+            int numberOfWord = (rand()%numbOfWord)+1;
+            QString s = "SELECT * FROM word_table WHERE id=" + QString::number(numberOfWord);
+            QSqlQuery a_query;
+            bool b = a_query.exec(s);
+            if (!b)
+                qDebug() << "Не пошло считываие.";
+            QSqlRecord rec = a_query.record();
+            while (a_query.next())
+            {
+                enWord = a_query.value(rec.indexOf("enWord")).toString();
+                ruWord = a_query.value(rec.indexOf("ruWord")).toString();
+            }
+            word->setText(enWord);
+            getWord->setText("Перевод");
+            state = false;
+        }
+        else
+        {
+            word->setText(ruWord);
+            getWord->setText("Слово");
+            state = true;
+        }
     }
     else
-    {
-        word->setText(ruWord);
-        getWord->setText("Слово");
-        state = true;
-    }
+        word->setText("База пуста");
 }
 

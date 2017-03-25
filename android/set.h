@@ -36,6 +36,9 @@ class set : public QWidget
     QPushButton * getWord;
     QLabel * word;
 
+    QPushButton* nextWord;
+    QPushButton* getTranslate;
+    QLabel* testProgress;
 
     //Сеть
     QNetworkAccessManager* qnam;
@@ -48,19 +51,24 @@ class set : public QWidget
     QString enWord;
     QString ruWord;
     int numbOfWord;
-    bool state;
+    int state;
+    QMap<QString, QString> testWord;
 public:
     set(QWidget *parent = 0);
     ~set();
 
     QString getFormatString(QString);
     void getDataFromDatabases();
+    void getTestInterface();
+    void removeTestInterface();
 
 public slots:
     void startSync();
     void writeToFile();
     void syncWithServer();
+    void startTest();
     void getWordAction();
+    void getTranslateAction();
 };
 
 #endif // SET_H

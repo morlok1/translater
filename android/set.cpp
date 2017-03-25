@@ -8,19 +8,20 @@ set::set(QWidget *parent) : QWidget(parent)
     getSync->setText("Синхронизировать");
 
     getWord = new QPushButton(this);
-    getWord->setText("Слово");
+    getWord->setText("Начать");
 
     word = new QLabel(this);
+    word->setAlignment(Qt::AlignCenter);
     //words = new QListWidget(this);
 
-    grid->addWidget(getSync, 0,0);
-    grid->addWidget(getWord,1,0);
-    grid->addWidget(word,2,0);
+    grid->addWidget(getSync, 0,0,1,2);
+    grid->addWidget(getWord,1,0,1,2);
+    grid->addWidget(word,2,0,1,2);
 
     setLayout(grid);
 
     QWidget::connect(getSync, SIGNAL (clicked()), this, SLOT (startSync()));
-    QWidget::connect(getWord, SIGNAL (clicked()), this, SLOT (getWordAction()));
+    QWidget::connect(getWord, SIGNAL (clicked()), this, SLOT (startTest()));
 
     //Сеть
     qnam = new QNetworkAccessManager();
@@ -139,37 +140,100 @@ void set::getDataFromDatabases()
     }
 }
 
+void set::startTest()
+{
+    srand(time(NULL));
+    int numberOfWord = -1;
+    QString s;
+    QSqlQuery a_query;
+    bool b;
+    QVector<int> numbers;
+    for (int i = 0; i < (numbOfWord < 10 ? numbOfWord : 10); i++)
+    {
+        numberOfWord = (rand()%numbOfWord)+1;
+        while (numbers.contains(numberOfWord))
+            numberOfWord = (rand()%numbOfWord)+1;
+        numbers.append(numberOfWord);
+        s = "SELECT * FROM word_table WHERE id=" + QString::number(numberOfWord);
+        b = a_query.exec(s);
+        if (!b)
+            qDebug() << "Не пошло считываие.";
+        QSqlRecord rec = a_query.record();
+        while (a_query.next())
+        {
+            enWord = a_query.value(rec.indexOf("enWord")).toString();
+            ruWord = a_query.value(rec.indexOf("ruWord")).toString();
+            testWord.insert(enWord,ruWord);
+        }
+    }
+
+    //Включить интерфейс прохождения теста
+    state = 0;
+    getTestInterface();
+}
+
+void set::getTestInterface()
+{
+    nextWord = new QPushButton(this);
+    nextWord->setText("Следующее");
+    getTranslate = new QPushButton(this);
+    getTranslate->setText("Не помню");
+    testProgress = new QLabel(this);
+    testProgress->setAlignment(Qt::AlignCenter);
+    testProgress->setText("1/" + QString::number(numbOfWord < 10 ? numbOfWord : 10));
+    grid->addWidget(getTranslate, 3,0);
+    grid->addWidget(nextWord, 3,1);
+    grid->addWidget(testProgress,4,0,1,2);
+
+    QWidget::connect(getTranslate, SIGNAL (clicked()), this, SLOT (getTranslateAction()));
+    QWidget::connect(nextWord, SIGNAL (clicked()), this, SLOT (getWordAction()));
+
+    //Первый проход теста
+    state++;
+    srand(time(NULL));
+    QList<QString> keys = testWord.keys();
+    enWord = keys[rand()%testWord.size()];
+    ruWord = testWord[enWord];
+    testWord.remove(enWord);
+    word->setText(enWord);
+
+
+}
+
 void set::getWordAction()
 {
     srand(time(NULL));
-    if (numbOfWord != 0)
+    if (testWord.size() != 0)
     {
-        if (state)
-        {
-            int numberOfWord = (rand()%numbOfWord)+1;
-            QString s = "SELECT * FROM word_table WHERE id=" + QString::number(numberOfWord);
-            QSqlQuery a_query;
-            bool b = a_query.exec(s);
-            if (!b)
-                qDebug() << "Не пошло считываие.";
-            QSqlRecord rec = a_query.record();
-            while (a_query.next())
-            {
-                enWord = a_query.value(rec.indexOf("enWord")).toString();
-                ruWord = a_query.value(rec.indexOf("ruWord")).toString();
-            }
-            word->setText(enWord);
-            getWord->setText("Перевод");
-            state = false;
-        }
-        else
-        {
-            word->setText(ruWord);
-            getWord->setText("Слово");
-            state = true;
-        }
+        QList<QString> keys = testWord.keys();
+        enWord = keys[rand()%testWord.size()];
+        ruWord = testWord[enWord];
+        testWord.remove(enWord);
+        word->setText(enWord);
+        state++;
+        testProgress->setText(QString::number(state) + "/" + QString::number(numbOfWord < 10 ? numbOfWord : 10));
     }
     else
-        word->setText("База пуста");
+        removeTestInterface();
 }
 
+void set::getTranslateAction()
+{
+    word->setText(ruWord);
+}
+
+void set::removeTestInterface()
+{
+    QWidget::disconnect(getTranslate, SIGNAL (clicked()), this, SLOT (getTranslateAction()));
+    QWidget::disconnect(nextWord, SIGNAL (clicked()), this, SLOT (getWordAction()));
+
+    grid->removeWidget(getTranslate);
+    grid->removeWidget(nextWord);
+    grid->removeWidget(testProgress);
+
+    delete getTranslate;
+    delete nextWord;
+    delete testProgress;
+
+    word->clear();
+}

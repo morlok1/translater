@@ -157,10 +157,6 @@ void set::startSync()
     reply = qnam->post(QNetworkRequest(QUrl(url)), &(*multiPart));
 
     QWidget::connect(reply, SIGNAL (finished()), this, SLOT (writeToFile()));
-
-    //QString url = "http://morlok1.esy.es/getData.php";
-    //reply = qnam->get(QNetworkRequest(QUrl(url)));
-    //QWidget::connect(reply, SIGNAL (finished()), this, SLOT (writeToFile()));
 }
 
 void set::writeToFile()
@@ -216,34 +212,39 @@ QString set::getFormatString(QString str)
 
 void set::startTest()
 {
-    srand(time(NULL));
-    int numberOfWord = -1;
-    QString s;
-    QSqlQuery a_query;
-    bool b;
-    QVector<int> numbers;
-    for (int i = 0; i < (numbOfWord < 10 ? numbOfWord : 10); i++)
+    if (numbOfWord != 0)
     {
-        numberOfWord = (rand()%numbOfWord)+1;
-        while (numbers.contains(numberOfWord))
-            numberOfWord = (rand()%numbOfWord)+1;
-        numbers.append(numberOfWord);
-        s = "SELECT * FROM word_table WHERE id=" + QString::number(numberOfWord);
-        b = a_query.exec(s);
-        if (!b)
-            qDebug() << "Не пошло считываие.";
-        QSqlRecord rec = a_query.record();
-        while (a_query.next())
+        srand(time(NULL));
+        int numberOfWord = -1;
+        QString s;
+        QSqlQuery a_query;
+        bool b;
+        QVector<int> numbers;
+        for (int i = 0; i < (numbOfWord < 10 ? numbOfWord : 10); i++)
         {
-            enWord = a_query.value(rec.indexOf("enWord")).toString();
-            ruWord = a_query.value(rec.indexOf("ruWord")).toString();
-            testWord.insert(enWord,ruWord);
+            numberOfWord = (rand()%numbOfWord)+1;
+            while (numbers.contains(numberOfWord))
+                numberOfWord = (rand()%numbOfWord)+1;
+            numbers.append(numberOfWord);
+            s = "SELECT * FROM word_table WHERE id=" + QString::number(numberOfWord);
+            b = a_query.exec(s);
+            if (!b)
+                qDebug() << "Не пошло считываие.";
+            QSqlRecord rec = a_query.record();
+            while (a_query.next())
+            {
+                enWord = a_query.value(rec.indexOf("enWord")).toString();
+                ruWord = a_query.value(rec.indexOf("ruWord")).toString();
+                testWord.insert(enWord,ruWord);
+            }
         }
-    }
 
-    //Включить интерфейс прохождения теста
-    state = 0;
-    getTestInterface();
+        //Включить интерфейс прохождения теста
+        state = 0;
+        getTestInterface();
+    }
+    else
+        word->setText("База пуста");
 }
 
 void set::getTestInterface()

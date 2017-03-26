@@ -143,9 +143,24 @@ set::~set()
 
 void set::startSync()
 {
+    multiPart = new QHttpMultiPart(QHttpMultiPart::FormDataType);
     QString url = "http://morlok1.esy.es/getData.php";
-    reply = qnam->get(QNetworkRequest(QUrl(url)));
+
+    //authInfo->setText("Авторизуемся");
+    QHttpPart textPart;
+    textPart.setHeader(QNetworkRequest::ContentDispositionHeader, QVariant(QString("form-data; name=\"nick\"")));
+    QByteArray postDataByteArray;
+    postDataByteArray.append(userNick);
+    textPart.setBody(postDataByteArray);
+    multiPart->append(textPart);
+
+    reply = qnam->post(QNetworkRequest(QUrl(url)), &(*multiPart));
+
     QWidget::connect(reply, SIGNAL (finished()), this, SLOT (writeToFile()));
+
+    //QString url = "http://morlok1.esy.es/getData.php";
+    //reply = qnam->get(QNetworkRequest(QUrl(url)));
+    //QWidget::connect(reply, SIGNAL (finished()), this, SLOT (writeToFile()));
 }
 
 void set::writeToFile()

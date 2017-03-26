@@ -23,7 +23,7 @@ while ($row = mysql_fetch_object($sql))
 
 if ($state == 0) //Ник не повторялся
 	echo "answer:0";
-else 			 				//Такой ник уже есть
+else 			 //Такой ник уже есть
 	echo "answer:1";
 
 ?>

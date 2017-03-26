@@ -3,28 +3,11 @@
 set::set(QWidget *parent) : QWidget(parent)
 {
     grid = new QGridLayout(this);
-
-    getSync = new QPushButton(this);
-    getSync->setText("Синхронизировать");
-
-    getWord = new QPushButton(this);
-    getWord->setText("Начать");
-
-    word = new QLabel(this);
-    word->setAlignment(Qt::AlignCenter);
-    //words = new QListWidget(this);
-
-    grid->addWidget(getSync, 0,0,1,2);
-    grid->addWidget(getWord,1,0,1,2);
-    grid->addWidget(word,2,0,1,2);
-
     setLayout(grid);
-
-    QWidget::connect(getSync, SIGNAL (clicked()), this, SLOT (startSync()));
-    QWidget::connect(getWord, SIGNAL (clicked()), this, SLOT (startTest()));
 
     //Сеть
     qnam = new QNetworkAccessManager();
+
 
     //База данных
     dbase = QSqlDatabase::addDatabase("QSQLITE"); //Создаем базу данных
@@ -42,21 +25,115 @@ set::set(QWidget *parent) : QWidget(parent)
             "rating int(11)"
             ");"; //Создаем таблицу, если её еще не существует
     bool b = a_query.exec(s);
-    if (!b) {
+    if (!b)
+    {
         qDebug() << "Таблица со словами уже существует";
     }
 
-
-    numbOfWord = 0;
-    //Посчитаем  количество слов в словаре
-    s = "SELECT * FROM word_table";
+    //Создаем таблицу авторизации, которая будет хранить ник
+    s = "CREATE TABLE auth_table ("
+            "id integer PRIMARY KEY NOT NULL, "
+            "nick VARCHAR(256)"
+            ");"; //Создаем таблицу, если её еще не существует
     b = a_query.exec(s);
     if (!b)
-        qDebug() << "Не пошло считываие.";
-    while (a_query.next())
-        numbOfWord++;
+    {
+        qDebug() << "Таблица автризации уже существует";
+    }
 
-    state = true;
+    //Необходимо проверить, авторизован ли на данный момент пользователь
+    //Чтобы показать соответствующий интерфейс
+
+    s = "SELECT * FROM auth_table";
+    b = a_query.exec(s);
+    if (!b)
+        qDebug() << "Не пошло считывание. auth_table";
+    b = false;
+    QSqlRecord rec = a_query.record();
+    while (a_query.next())
+    {
+        userNick = a_query.value(rec.indexOf("nick")).toString();
+        b = true;
+    }
+
+    if (b) //Пользователь авторизован
+    {
+        numbOfWord = 0;
+        //Посчитаем  количество слов в словаре
+        s = "SELECT * FROM word_table";
+        b = a_query.exec(s);
+        if (!b)
+            qDebug() << "Не пошло считываие. word_table";
+        while (a_query.next())
+            numbOfWord++;
+
+        state = true;
+
+        getUserInterface();
+    }
+    else //Иначе выдаем интерфейс авторизации
+        getAuthInterface();
+}
+
+void set::getAuthInterface()
+{
+    authText = new QLabel(this);
+    authText->setText("Авторизация");
+    authText->setAlignment(Qt::AlignLeft);
+
+    nickname = new QLineEdit(this);
+    nickname->setPlaceholderText("Логин");
+
+    getAuth = new QPushButton(this);
+    getAuth->setText("Войти");
+
+    authInfo = new QLabel(this);
+
+    grid->addWidget(authText,0,0);
+    grid->addWidget(nickname,1,0);
+    grid->addWidget(getAuth,2,0);
+    grid->addWidget(authInfo,3,0);
+
+    QWidget::connect(getAuth, SIGNAL (clicked()), this, SLOT (startAuthorization()));
+}
+
+void set::removeAuthInterface()
+{
+    //Удаление интерфейса авторизации
+    QWidget::disconnect(getAuth, SIGNAL (clicked()), this, SLOT (startAuthorization()));
+
+    grid->removeWidget(authText);
+    grid->removeWidget(nickname);
+    grid->removeWidget(getAuth);
+    grid->removeWidget(authInfo);
+
+    delete authText;
+    delete nickname;
+    delete getAuth;
+    delete authInfo;
+
+    getUserInterface();
+}
+
+void set::getUserInterface()
+{
+    userInfo = new QLabel(this);
+    userInfo->setText(userNick + " : " + QString::number(numbOfWord) + " слов(а).");
+    getSync = new QPushButton(this);
+    getSync->setText("Синхронизировать");
+
+    getWord = new QPushButton(this);
+    getWord->setText("Начать");
+
+    word = new QLabel(this);
+    word->setAlignment(Qt::AlignCenter);
+    //words = new QListWidget(this);
+    grid->addWidget(userInfo, 0,0,1,2);
+    grid->addWidget(getSync, 1,0,1,2);
+    grid->addWidget(getWord,2,0,1,2);
+    grid->addWidget(word,3,0,1,2);
+    QWidget::connect(getSync, SIGNAL (clicked()), this, SLOT (startSync()));
+    QWidget::connect(getWord, SIGNAL (clicked()), this, SLOT (startTest()));
 }
 
 set::~set()
@@ -113,31 +190,13 @@ void set::syncWithServer()
             }
         }
     }
+    userInfo->setText(userNick + " : " + QString::number(numbOfWord) + " слов(а).");
 }
 
 QString set::getFormatString(QString str)
 {
     str = str.right(str.length() - 4).trimmed();
     return str;
-}
-
-
-//Этот метод устарел
-void set::getDataFromDatabases()
-{
-    QString s = "SELECT * FROM word_table";
-    QSqlQuery a_query;
-    bool b = a_query.exec(s);
-    if (!b)
-        qDebug() << "Не пошло считываие. stopCharTable";
-    QSqlRecord rec = a_query.record();
-    QString res;
-    while (a_query.next())
-    {
-        res = a_query.value(rec.indexOf("enWord")).toString() + "---";
-        res += a_query.value(rec.indexOf("ruWord")).toString();
-        //words->addItem(res);
-    }
 }
 
 void set::startTest()
@@ -181,9 +240,9 @@ void set::getTestInterface()
     testProgress = new QLabel(this);
     testProgress->setAlignment(Qt::AlignCenter);
     testProgress->setText("1/" + QString::number(numbOfWord < 10 ? numbOfWord : 10));
-    grid->addWidget(getTranslate, 3,0);
-    grid->addWidget(nextWord, 3,1);
-    grid->addWidget(testProgress,4,0,1,2);
+    grid->addWidget(getTranslate, 4,0);
+    grid->addWidget(nextWord, 4,1);
+    grid->addWidget(testProgress,5,0,1,2);
 
     QWidget::connect(getTranslate, SIGNAL (clicked()), this, SLOT (getTranslateAction()));
     QWidget::connect(nextWord, SIGNAL (clicked()), this, SLOT (getWordAction()));
@@ -236,4 +295,78 @@ void set::removeTestInterface()
     delete testProgress;
 
     word->clear();
+}
+
+void set::startAuthorization()
+{
+    multiPart = new QHttpMultiPart(QHttpMultiPart::FormDataType);
+    QString url = "http://morlok1.esy.es/checkNickName.php";
+    QString nick = nickname->text().trimmed();
+    if (nick != "") //Если ник не оказывается пустым
+    {
+        //authInfo->setText("Авторизуемся");
+        QHttpPart textPart;
+        textPart.setHeader(QNetworkRequest::ContentDispositionHeader, QVariant(QString("form-data; name=\"nick\"")));
+        QByteArray postDataByteArray;
+        postDataByteArray.append(nick);
+        textPart.setBody(postDataByteArray);
+        multiPart->append(textPart);
+
+        reply = qnam->post(QNetworkRequest(QUrl(url)), &(*multiPart));
+
+        QWidget::connect(reply, SIGNAL (finished()), this, SLOT (getAuthRequest()));
+
+    }
+    else //Иначе - жалуемся
+        authInfo->setText("Логин пуст");
+}
+
+void set::getAuthRequest()
+{
+    QFile file("words.txt");
+    file.open(QIODevice::WriteOnly | QIODevice::Text);
+
+    QIODevice * content = static_cast<QIODevice*>(QObject::sender());
+    file.write(content->readAll());
+    file.close();
+
+    file.open(QIODevice::ReadOnly | QIODevice::Text);
+
+    QString str;
+    bool res = false;
+    while (!file.atEnd()) //До самого конца файла
+    {
+        str = file.readLine();
+        if (str.indexOf("answer:1") != -1)
+            res = true;
+    }
+
+    if (res) //Если севрер ответил нам хорошими новостями
+    {
+        //Переходим к интерфейсу тестирования
+
+        userNick = nickname->text(); //Запоминаем ник на время этой сессии
+
+        //Считаем количество слов
+        numbOfWord = 0;
+        //Посчитаем  количество слов в словаре
+        str = "SELECT * FROM word_table";
+        QSqlQuery a_query;
+        res = a_query.exec(str);
+        if (!res)
+            qDebug() << "Не пошло считываие. word_table";
+        while (a_query.next())
+            numbOfWord++;
+
+        state = true;
+
+        removeAuthInterface();
+
+        str = "INSERT INTO auth_table (nick) VALUES ('" + userNick + "')";
+        res = a_query.exec(str);
+        if (!res)
+            qDebug() << "Авторизация в базе данных не отметилась";
+    }
+    else
+        authInfo->setText("Логин не найден");
 }

@@ -6,12 +6,14 @@
 #include <QPushButton>
 #include <QGridLayout>
 #include <QLabel>
+#include <QLineEdit>
 
 //Работа с сетью
 #include <QUrl>
 #include <QtNetwork/QNetworkAccessManager>
 #include <QtNetwork/QNetworkRequest>
 #include <QtNetwork/QNetworkReply>
+#include <QHttpMultiPart>
 
 //Работа с файлами
 #include <QFile>
@@ -31,6 +33,8 @@ class set : public QWidget
 
     //Интерфейс
     //Тестирование
+    QLabel* userInfo;
+
     QPushButton * getSync;
     //QListWidget * words;
     QPushButton * getWord;
@@ -40,11 +44,19 @@ class set : public QWidget
     QPushButton* getTranslate;
     QLabel* testProgress;
 
+    //Авторизация
+    QLabel* authText;
+    QLineEdit* nickname;
+    QPushButton* getAuth;
+    QLabel* authInfo;
+
     //Сеть
     QNetworkAccessManager* qnam;
     QNetworkReply *reply;
+    QHttpMultiPart* multiPart;
     
-    QSqlDatabase dbase; //База данных
+    //База данных
+    QSqlDatabase dbase;
 
 
     //Данные
@@ -53,14 +65,19 @@ class set : public QWidget
     int numbOfWord;
     int state;
     QMap<QString, QString> testWord;
+
+
+    QString userNick;
 public:
     set(QWidget *parent = 0);
     ~set();
 
     QString getFormatString(QString);
-    void getDataFromDatabases();
     void getTestInterface();
     void removeTestInterface();
+
+
+
 
 public slots:
     void startSync();
@@ -69,6 +86,15 @@ public slots:
     void startTest();
     void getWordAction();
     void getTranslateAction();
+
+    //Работа с интерфейсом
+    void getAuthInterface();
+    void removeAuthInterface();
+    void getUserInterface();
+
+    //Авторизация
+    void startAuthorization();
+    void getAuthRequest();
 };
 
 #endif // SET_H

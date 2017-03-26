@@ -1,0 +1,6 @@
+body {height:100px; width:150px;}
+
+#authReg {position:absolute; top:10;}
+#authName {position: absolute; top:50px; left:10px;}
+#sub {position:absolute; top:50px; left:190px;}
+#answer {position:absolute; top:80px; left:10px; color: red;}

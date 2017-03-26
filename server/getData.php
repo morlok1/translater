@@ -1,12 +1,6 @@
 <?php
 //Подключаемся к базе данных
-$host = "localhost";
-$user = "u128217053_m";
-$pass = "Lfnfvjtqcvthnb";
-$database = "u128217053_tr";
-$db = mysql_connect($host, $user, $pass);	
-mysql_select_db($database, $db);
-mysql_query('SET NAMES UTF8');
+include('db.inc');
 
 $query = "SELECT * FROM translate_table WHERE sync=0"; //Извлекаем данные для синхронизации
 

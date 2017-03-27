@@ -67,7 +67,7 @@ set::set(QWidget *parent) : QWidget(parent)
         while (a_query.next())
             numbOfWord++;
 
-        state = true;
+        state = -1;
 
         getUserInterface();
     }
@@ -212,6 +212,7 @@ QString set::getFormatString(QString str)
 
 void set::startTest()
 {
+    getWord->setDisabled(true);
     if (numbOfWord != 0)
     {
         srand(time(NULL));
@@ -311,6 +312,9 @@ void set::removeTestInterface()
     delete testProgress;
 
     word->clear();
+
+    state = -1;
+    getWord->setDisabled(false);
 }
 
 void set::startAuthorization()
@@ -374,7 +378,7 @@ void set::getAuthRequest()
         while (a_query.next())
             numbOfWord++;
 
-        state = true;
+        state = -1;
 
         removeAuthInterface();
 

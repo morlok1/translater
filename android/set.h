@@ -32,14 +32,16 @@ class set : public QWidget
     QGridLayout* grid;
 
     //Интерфейс
-    //Тестирование
+    //Главный экран
     QLabel* userInfo;
 
     QPushButton * getSync;
     //QListWidget * words;
+    QPushButton * getWordList;
     QPushButton * getWord;
     QLabel * word;
 
+    //Интерфейс тестирования
     QPushButton* nextWord;
     QPushButton* getTranslate;
     QLabel* testProgress;
@@ -49,6 +51,11 @@ class set : public QWidget
     QLineEdit* nickname;
     QPushButton* getAuth;
     QLabel* authInfo;
+
+    //Обзор слов
+    QPushButton* returnToUser;
+    QPushButton* deleteWord;
+    QListWidget* allWord;
 
     //Сеть
     QNetworkAccessManager* qnam;
@@ -76,7 +83,7 @@ public:
     void getTestInterface();
     void removeTestInterface();
 
-
+    void fillTheWordList();
 
 
 public slots:
@@ -91,10 +98,20 @@ public slots:
     void getAuthInterface();
     void removeAuthInterface();
     void getUserInterface();
+    void removeUserInterface();
+    void getWordListInterface();
+    void removeWordListInterface();
 
     //Авторизация
     void startAuthorization();
     void getAuthRequest();
+
+    void showWordList();
+    void returnFromWordListToUserAction();
+
+    void deleteWordAction();
+
+    void activateDeleteButton();
 };
 
 #endif // SET_H

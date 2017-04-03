@@ -490,6 +490,7 @@ void set::deleteWordAction()
         a_query.exec(s);
         //Перезаписываем
         fillTheWordList();
+        numbOfWord--;
     }
 }
 

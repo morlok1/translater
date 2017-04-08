@@ -55,6 +55,10 @@ class set : public QWidget
     //Обзор слов
     QPushButton* returnToUser;
     QPushButton* deleteWord;
+    QPushButton* setAsLearned;
+    QPushButton* showAllWords;
+    QPushButton* showNewWords;
+    QPushButton* showLearnedWords;
     QListWidget* allWord;
 
     //Сеть
@@ -83,7 +87,7 @@ public:
     void getTestInterface();
     void removeTestInterface();
 
-    void fillTheWordList();
+    //void fillTheWordList();
 
 
 public slots:
@@ -110,8 +114,13 @@ public slots:
     void returnFromWordListToUserAction();
 
     void deleteWordAction();
+    void setAsLearnedAction();
 
     void activateDeleteButton();
+
+    void showNewWordsAction();
+    void showAllWordsAction();
+    void showLearnedWordsAction();
 };
 
 #endif // SET_H

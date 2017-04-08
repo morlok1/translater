@@ -20,9 +20,11 @@ set::set(QWidget *parent) : QWidget(parent)
     //Создаем таблицу, если её еще не существует
     QString s = "CREATE TABLE word_table ("
             "id integer PRIMARY KEY NOT NULL, "
-            "enWord VARCHAR(255), "
-            "ruWord VARCHAR(255), "
-            "rating int(11)"
+            "enWord VARCHAR(255), "                 //Английское слово
+            "ruWord VARCHAR(255), "                 //Русское слово
+            "rating int(11), "                      //Рейтинг
+            "sync int(11), "                        //Синхронизация с сервером
+            "learned int(11)"                       //Выучено ли слово
             ");"; //Создаем таблицу, если её еще не существует
     bool b = a_query.exec(s);
     if (!b)
@@ -56,6 +58,7 @@ set::set(QWidget *parent) : QWidget(parent)
         b = true;
     }
 
+
     if (b) //Пользователь авторизован
     {
         numbOfWord = 0;
@@ -74,6 +77,9 @@ set::set(QWidget *parent) : QWidget(parent)
     else //Иначе выдаем интерфейс авторизации
         getAuthInterface();
 }
+
+
+//Работа с интерфейсом
 
 void set::getAuthInterface()
 {
@@ -126,7 +132,7 @@ void set::getUserInterface()
     getWordList->setText("Обзор слов");
 
     getWord = new QPushButton(this);
-    getWord->setText("Начать");
+    getWord->setText("Тестирование");
 
     word = new QLabel(this);
     word->setAlignment(Qt::AlignCenter);
@@ -215,33 +221,67 @@ void set::getWordListInterface()
     deleteWord->setText("Удалить");
     deleteWord->setDisabled(true);
 
+    setAsLearned = new QPushButton(this);
+    setAsLearned->setText("Выучено");
+    setAsLearned->setDisabled(true);
+
+    showAllWords = new QPushButton(this);
+    showAllWords->setText("Все");
+    //showAllWords->setDisabled(true);
+
+    showNewWords = new QPushButton(this);
+    showNewWords->setText("Новые");
+
+    showLearnedWords = new QPushButton(this);
+    showLearnedWords->setText("Выученные");
+
     allWord = new QListWidget(this);
 
-    grid->addWidget(deleteWord,0,0);
-    grid->addWidget(allWord,1,0);
-    grid->addWidget(returnToUser,2,0);
+    grid->addWidget(deleteWord,0,0,1,3);
+    grid->addWidget(setAsLearned,0,3,1,3);
+    grid->addWidget(showNewWords, 1,0,1,2);
+    grid->addWidget(showAllWords, 1,2,1,2);
+    grid->addWidget(showLearnedWords, 1,4,1,2);
+    grid->addWidget(allWord,2,0,1,6);
+    grid->addWidget(returnToUser,3,0,1,6);
 
     setLayout(grid);
 
     QWidget::connect(deleteWord, SIGNAL (clicked()), this, SLOT(deleteWordAction()));
+    QWidget::connect(setAsLearned, SIGNAL (clicked()), this, SLOT(setAsLearnedAction()));
     QWidget::connect(returnToUser, SIGNAL (clicked()), this, SLOT(returnFromWordListToUserAction()));
     QWidget::connect(allWord, SIGNAL (itemSelectionChanged()), this, SLOT (activateDeleteButton()));
+    QWidget::connect(showNewWords, SIGNAL(clicked()), this, SLOT (showNewWordsAction()));
+    QWidget::connect(showAllWords, SIGNAL(clicked()), this, SLOT (showAllWordsAction()));
+    QWidget::connect(showLearnedWords, SIGNAL(clicked()), this, SLOT (showLearnedWordsAction()));
 
-    fillTheWordList();
+    showAllWordsAction();
 
 }
 
 void set::removeWordListInterface()
 {
     grid->removeWidget(deleteWord);
+    grid->removeWidget(setAsLearned);
+    grid->removeWidget(showNewWords);
+    grid->removeWidget(showAllWords);
+    grid->removeWidget(showLearnedWords);
     grid->removeWidget(allWord);
     grid->removeWidget(returnToUser);
 
     QWidget::disconnect(deleteWord, SIGNAL (clicked()), this, SLOT(deleteWordAction()));
+    QWidget::disconnect(setAsLearned, SIGNAL (clicked()), this, SLOT(setAsLearnedAction()));
     QWidget::disconnect(returnToUser, SIGNAL (clicked()), this, SLOT(returnFromWordListToUserAction()));
     QWidget::disconnect(allWord, SIGNAL (itemSelectionChanged()), this, SLOT (activateDeleteButton()));
+    QWidget::disconnect(showNewWords, SIGNAL(clicked()), this, SLOT (showNewWordsAction()));
+    QWidget::disconnect(showAllWords, SIGNAL(clicked()), this, SLOT (showAllWordsAction()));
+    QWidget::disconnect(showLearnedWords, SIGNAL(clicked()), this, SLOT (showLearnedWordsAction()));
 
     delete deleteWord;
+    delete setAsLearned;
+    delete showNewWords;
+    delete showAllWords;
+    delete showLearnedWords;
     delete returnToUser;
     delete allWord;
 }
@@ -253,6 +293,7 @@ set::~set()
 
 }
 
+//Синхронизация
 void set::startSync()
 {
     multiPart = new QHttpMultiPart(QHttpMultiPart::FormDataType);
@@ -287,7 +328,7 @@ void set::syncWithServer()
     QFile file("words.txt");
     file.open(QIODevice::ReadOnly | QIODevice::Text);
     QString ruLine, enLine;
-    QString s_insert = "INSERT INTO word_table (enWord, ruWord, rating) VALUES ('%1', '%2', %3);";
+    QString s_insert = "INSERT INTO word_table (enWord, ruWord, rating, sync, learned) VALUES ('%1', '%2', %3, %4, %5);";
     QSqlQuery a_query;
     while (!file.atEnd())
     {
@@ -305,7 +346,9 @@ void set::syncWithServer()
             //Заносим слова в базу данных
             QString s = s_insert.arg(enLine)
                     .arg(ruLine)
-                    .arg(0);
+                    .arg(0)         //Рейтинг - 0
+                    .arg(1)         //Синхронизированное слово
+                    .arg(0);        //Слово не выучено
             if (a_query.exec(s))
             {
                 numbOfWord++;
@@ -322,6 +365,7 @@ QString set::getFormatString(QString str)
     return str;
 }
 
+//Тестирование
 void set::startTest()
 {
     getWord->setDisabled(true);
@@ -473,6 +517,7 @@ void set::returnFromWordListToUserAction()
 void set::activateDeleteButton()
 {
     deleteWord->setDisabled(false);
+    setAsLearned->setDisabled(false);
 }
 
 
@@ -489,17 +534,78 @@ void set::deleteWordAction()
         s = s_insert.arg(engWord);
         a_query.exec(s);
         //Перезаписываем
-        fillTheWordList();
+        //fillTheWordList();
+        showAllWordsAction();
         numbOfWord--;
     }
 }
 
-void set::fillTheWordList()
+void set::setAsLearnedAction()
 {
+    if (allWord->currentItem())
+    {
+        QString engWord = allWord->currentItem()->text();
+        engWord = engWord.left(engWord.indexOf(" --- ") + 1).trimmed();
+
+        QSqlQuery a_query;
+        QString s, s_insert;
+        s_insert = "UPDATE word_table SET learned=1 WHERE enWord='%1'";
+        s = s_insert.arg(engWord);
+        a_query.exec(s);
+        //Перезаписываем
+        //fillTheWordList();
+        showAllWordsAction();
+    }
+}
+
+//Показываем слова
+void set::showAllWordsAction()
+{
+    showAllWords->setDisabled(true);
+    showNewWords->setDisabled(false);
+    showLearnedWords->setDisabled(false);
     allWord->clear();
     //А теперь заполняем листы
     QSqlQuery a_query;
     a_query.exec("SELECT * FROM word_table");
+    QSqlRecord rec = a_query.record();
+
+    while(a_query.next())
+    {
+        enWord = a_query.value(rec.indexOf("enWord")).toString();
+        ruWord = a_query.value(rec.indexOf("ruWord")).toString();
+        allWord->addItem(enWord + " --- " + ruWord);
+    }
+}
+
+void set::showNewWordsAction()
+{
+    showAllWords->setDisabled(false);
+    showNewWords->setDisabled(true);
+    showLearnedWords->setDisabled(false);
+    allWord->clear();
+    //А теперь заполняем листы
+    QSqlQuery a_query;
+    a_query.exec("SELECT * FROM word_table WHERE learned=0");
+    QSqlRecord rec = a_query.record();
+
+    while(a_query.next())
+    {
+        enWord = a_query.value(rec.indexOf("enWord")).toString();
+        ruWord = a_query.value(rec.indexOf("ruWord")).toString();
+        allWord->addItem(enWord + " --- " + ruWord);
+    }
+}
+
+void set::showLearnedWordsAction()
+{
+    showAllWords->setDisabled(false);
+    showNewWords->setDisabled(false);
+    showLearnedWords->setDisabled(true);
+    allWord->clear();
+    //А теперь заполняем листы
+    QSqlQuery a_query;
+    a_query.exec("SELECT * FROM word_table WHERE learned=1");
     QSqlRecord rec = a_query.record();
 
     while(a_query.next())

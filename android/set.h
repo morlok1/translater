@@ -90,6 +90,8 @@ class set : public QWidget
     int state;
     //А здесь хранятся 10 слов для перевода во время тестирования
     QMap<QString, QString> testWord;
+    //Количество слов в тесте
+    int testSize;
     //Направление перевода при тестировании
     bool RusEng;            //true - eng=>rus
                             //false - rus=>eng

@@ -237,7 +237,7 @@ void set::getTestSUBInterface()
 
     testProgress = new QLabel(this);
     testProgress->setAlignment(Qt::AlignCenter);
-    testProgress->setText("1/" + QString::number(numbOfWord < 10 ? numbOfWord : 10));
+    testProgress->setText("1/" + QString::number(testSize));
 
     grid->addWidget(getTranslate, 4,0);
     grid->addWidget(nextWord, 4,1);
@@ -253,7 +253,7 @@ void set::getTestSUBInterface()
     enWord = keys[rand()%testWord.size()];
     ruWord = testWord[enWord];
     testWord.remove(enWord);
-    word->setText(enWord);
+    word->setText(RusEng ? enWord : ruWord);
 
 }
 
@@ -430,6 +430,7 @@ void set::syncWithServer()
         }
     }
     getSumOfWords();
+    userInfo->setText(userNick + " : " + QString::number(numbOfWord) + " слов(а) всего. \r\n" + QString::number(numbOfNewWord) + " слов(а) новых.");
     //userInfo->setText(userNick + " : " + QString::number(numbOfWord) + " слов(а).");
 }
 
@@ -442,59 +443,54 @@ QString set::getFormatString(QString str)
 //Тестирование
 void set::startTestAction()
 {
+    testWord.clear();
     //getWord->setDisabled(true);
     startTest->setDisabled(true);
     setRepeatingMode->setDisabled(true);
     setLearningMode->setDisabled(true);
     setFromRusToEngMode->setDisabled(true);
     setFromEngToRusMode->setDisabled(true);
-    if (numbOfWord != 0)
-    {
+    //if (numbOfWord != 0)
+    //{
         srand(time(NULL));
-        int numberOfWord = -1;
         QString s;
         QSqlQuery a_query;
         bool b;
-        QVector<int> numbers;
-        for (int i = 0; i < (numbOfWord < 10 ? numbOfWord : 10); i++)
-        {
-            numberOfWord = (rand()%numbOfWord)+1;
-            while (numbers.contains(numberOfWord))
-                numberOfWord = (rand()%numbOfWord)+1;
-            numbers.append(numberOfWord);
-            s = "SELECT * FROM word_table WHERE id=" + QString::number(numberOfWord);
-            b = a_query.exec(s);
-            if (!b)
-                qDebug() << "Не пошло считываие.";
-            QSqlRecord rec = a_query.record();
-            while (a_query.next())
-            {
-                enWord = a_query.value(rec.indexOf("enWord")).toString();
-                ruWord = a_query.value(rec.indexOf("ruWord")).toString();
-                testWord.insert(enWord,ruWord);
-            }
-        }
 
+        s = "SELECT * FROM word_table WHERE learned=" + QString::number(LearningRepeat ? 0 : 1);
+        b = a_query.exec(s);
+        if (!b)
+            qDebug() << "Не пошло считываие.";
+        QSqlRecord rec = a_query.record();
+        while (a_query.next())
+        {
+            enWord = a_query.value(rec.indexOf("enWord")).toString();
+            ruWord = a_query.value(rec.indexOf("ruWord")).toString();
+            testWord.insert(enWord,ruWord);
+        }
         //Включить интерфейс прохождения теста
         state = 0;
-        getTestSUBInterface();
-    }
-    else
-        word->setText("База пуста");
+        testSize = testWord.size() < 10 ? testWord.size() : 10;
+        if (testSize != 0)
+            getTestSUBInterface();
+    //}
+    //else
+        else
+            word->setText("База пуста");
 }
 
 void set::getWordAction()
 {
     srand(time(NULL));
-    if (testWord.size() != 0)
+    if (state != testSize)
     {
         QList<QString> keys = testWord.keys();
         enWord = keys[rand()%testWord.size()];
         ruWord = testWord[enWord];
         testWord.remove(enWord);
-        word->setText(enWord);
+        word->setText(RusEng ? enWord : ruWord);
         state++;
-        testProgress->setText(QString::number(state) + "/" + QString::number(numbOfWord < 10 ? numbOfWord : 10));
+        testProgress->setText(QString::number(state) + "/" + QString::number(testSize));
     }
     else
         removeTestSUBInterface();
@@ -502,7 +498,7 @@ void set::getWordAction()
 
 void set::getTranslateAction()
 {
-    word->setText(ruWord);
+    word->setText(RusEng ? ruWord : enWord);
 }
 
 
@@ -606,7 +602,7 @@ void set::showTestPage()
 
 void set::returnFromTestPageToUserAction()
 {
-    if (word->text() != "")
+    if (word->text() != "" && word->text() != "База пуста")
         removeTestSUBInterface();
     removeTestInterface();
     getUserInterface();
@@ -622,6 +618,8 @@ void set::activateDeleteButton()
 
 void set::deleteWordAction()
 {
+    deleteWord->setDisabled(true);
+    setAsLearned->setDisabled(true);
     if (allWord->currentItem())
     {
         QString engWord = allWord->currentItem()->text();
@@ -641,6 +639,8 @@ void set::deleteWordAction()
 
 void set::setAsLearnedAction()
 {
+    deleteWord->setDisabled(true);
+    setAsLearned->setDisabled(true);
     if (allWord->currentItem())
     {
         QString engWord = allWord->currentItem()->text();

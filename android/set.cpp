@@ -556,14 +556,10 @@ void set::getAuthRequest()
         //Считаем количество слов
         numbOfWord = 0;
         //Посчитаем  количество слов в словаре
-        str = "SELECT * FROM word_table";
-        QSqlQuery a_query;
-        res = a_query.exec(str);
-        if (!res)
-            qDebug() << "Не пошло считываие. word_table";
-        while (a_query.next())
-            numbOfWord++;
 
+        getSumOfWords();
+
+        QSqlQuery a_query;
         state = -1;
 
         removeAuthInterface();

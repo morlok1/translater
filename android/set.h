@@ -39,9 +39,16 @@ class set : public QWidget
     //QListWidget * words;
     QPushButton * getWordList;
     QPushButton * getWord;
-    QLabel * word;
+    QPushButton * createNewWord;
 
     //Интерфейс тестирования
+    QPushButton* setLearningMode;
+    QPushButton* setRepeatingMode;
+    QPushButton* setFromEngToRusMode;
+    QPushButton* setFromRusToEngMode;
+    QPushButton* startTest;
+    QLabel * word;
+    //Подинтерфейс тестирования
     QPushButton* nextWord;
     QPushButton* getTranslate;
     QLabel* testProgress;
@@ -71,21 +78,36 @@ class set : public QWidget
 
 
     //Данные
+
+    //Текущая пара тестирования
     QString enWord;
     QString ruWord;
+    //Количество слов
     int numbOfWord;
+    //Количество новых слов
+    int numbOfNewWord;
+    //Какое-то состояние, которое я где-то постоянно дергаю, но не помню, зачем
     int state;
+    //А здесь хранятся 10 слов для перевода во время тестирования
     QMap<QString, QString> testWord;
+    //Направление перевода при тестировании
+    bool RusEng;            //true - eng=>rus
+                            //false - rus=>eng
+    //Режим тестирования
+    bool LearningRepeat;    //true - изучение
+                            //false - повторение
 
-
+    //Ну а это ник пользователя, под которым он авторизован
     QString userNick;
+
+
 public:
+
     set(QWidget *parent = 0);
     ~set();
 
     QString getFormatString(QString);
-    void getTestInterface();
-    void removeTestInterface();
+    void getSumOfWords();
 
     //void fillTheWordList();
 
@@ -94,7 +116,7 @@ public slots:
     void startSync();
     void writeToFile();
     void syncWithServer();
-    void startTest();
+    void startTestAction();
     void getWordAction();
     void getTranslateAction();
 
@@ -105,13 +127,23 @@ public slots:
     void removeUserInterface();
     void getWordListInterface();
     void removeWordListInterface();
+    void getTestInterface();
+    void removeTestInterface();
+    void getTestSUBInterface();
+    void removeTestSUBInterface();
 
     //Авторизация
     void startAuthorization();
     void getAuthRequest();
 
+
+
     void showWordList();
     void returnFromWordListToUserAction();
+
+    void showTestPage();
+    void returnFromTestPageToUserAction();
+
 
     void deleteWordAction();
     void setAsLearnedAction();
@@ -121,6 +153,12 @@ public slots:
     void showNewWordsAction();
     void showAllWordsAction();
     void showLearnedWordsAction();
+
+
+    void setRepeatingModeAction();
+    void setLearningModeAction();
+    void setFromEngToRusModeAction();
+    void setFromRusToEngModeAction();
 };
 
 #endif // SET_H

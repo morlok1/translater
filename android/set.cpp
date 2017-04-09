@@ -61,14 +61,8 @@ set::set(QWidget *parent) : QWidget(parent)
 
     if (b) //Пользователь авторизован
     {
-        numbOfWord = 0;
-        //Посчитаем  количество слов в словаре
-        s = "SELECT * FROM word_table";
-        b = a_query.exec(s);
-        if (!b)
-            qDebug() << "Не пошло считываие. word_table";
-        while (a_query.next())
-            numbOfWord++;
+
+        getSumOfWords(); //Считаем слова
 
         state = -1;
 
@@ -124,7 +118,7 @@ void set::removeAuthInterface()
 void set::getUserInterface()
 {
     userInfo = new QLabel(this);
-    userInfo->setText(userNick + " : " + QString::number(numbOfWord) + " слов(а).");
+    userInfo->setText(userNick + " : " + QString::number(numbOfWord) + " слов(а) всего. \r\n" + QString::number(numbOfNewWord) + " слов(а) новых.");
     getSync = new QPushButton(this);
     getSync->setText("Синхронизировать");
 
@@ -134,16 +128,19 @@ void set::getUserInterface()
     getWord = new QPushButton(this);
     getWord->setText("Тестирование");
 
-    word = new QLabel(this);
-    word->setAlignment(Qt::AlignCenter);
+    createNewWord = new QPushButton(this);
+    createNewWord->setText("Перевести");
+    createNewWord->setDisabled(true);               //Это пока заглушечка, потом допилим сюда форму перевода
+
+
     //words = new QListWidget(this);
     grid->addWidget(userInfo, 0,0,1,2);
     grid->addWidget(getSync, 1,0,1,2);
     grid->addWidget(getWordList,2,0,1,2);
     grid->addWidget(getWord,3,0,1,2);
-    grid->addWidget(word,4,0,1,2);
+    grid->addWidget(createNewWord,4,0,1,2);
     QWidget::connect(getSync, SIGNAL (clicked()), this, SLOT (startSync()));
-    QWidget::connect(getWord, SIGNAL (clicked()), this, SLOT (startTest()));
+    QWidget::connect(getWord, SIGNAL (clicked()), this, SLOT (showTestPage()));
     QWidget::connect(getWordList, SIGNAL (clicked()), this, SLOT (showWordList()));
 }
 
@@ -153,30 +150,98 @@ void set::removeUserInterface()
     grid->removeWidget(getSync);
     grid->removeWidget(getWordList);
     grid->removeWidget(getWord);
-    grid->removeWidget(word);
+    grid->removeWidget(createNewWord);
 
     QWidget::disconnect(getSync, SIGNAL (clicked()), this, SLOT (startSync()));
-    QWidget::disconnect(getWord, SIGNAL (clicked()), this, SLOT (startTest()));
+    QWidget::disconnect(getWord, SIGNAL (clicked()), this, SLOT (showTestPage()));
+    QWidget::disconnect(getWordList, SIGNAL (clicked()), this, SLOT (showWordList()));
 
     delete userInfo;
     delete getSync;
     delete getWordList;
     delete getWord;
-    delete word;
+    delete createNewWord;
 }
 
 void set::getTestInterface()
 {
+    setRepeatingMode = new QPushButton(this);
+    setRepeatingMode->setText("Повторение");
+
+    setLearningMode = new QPushButton(this);
+    setLearningMode->setText("Изучение");
+    setLearningMode->setDisabled(true);             //Состояние тестирования по умолчанию
+    LearningRepeat = true;
+
+    setFromEngToRusMode = new QPushButton(this);
+    setFromEngToRusMode->setText("Eng=>Rus");
+    setFromEngToRusMode->setDisabled(true);         //Состояние тестирования по умолчанию
+    RusEng = true;
+
+    setFromRusToEngMode = new QPushButton(this);
+    setFromRusToEngMode->setText("Rus=>Eng");
+
+    startTest = new QPushButton(this);
+    startTest->setText("Начать");
+
+    returnToUser = new QPushButton(this);
+    returnToUser->setText("Назад");
+
+    word = new QLabel(this);
+    word->setAlignment(Qt::AlignCenter);
+
+    grid->addWidget(setRepeatingMode,0,0);
+    grid->addWidget(setLearningMode,0,1);
+    grid->addWidget(setFromEngToRusMode,1,0);
+    grid->addWidget(setFromRusToEngMode,1,1);
+    grid->addWidget(startTest,2,0,1,2);
+    grid->addWidget(word,3,0,1,2);
+    grid->addWidget(returnToUser,6,0,1,2);
+
+    QWidget::connect(setRepeatingMode, SIGNAL (clicked()), this, SLOT(setRepeatingModeAction()));
+    QWidget::connect(setLearningMode, SIGNAL (clicked()), this, SLOT(setLearningModeAction()));
+    QWidget::connect(setFromRusToEngMode, SIGNAL (clicked()), this, SLOT (setFromRusToEngModeAction()));
+    QWidget::connect(setFromEngToRusMode, SIGNAL (clicked()), this, SLOT (setFromEngToRusModeAction()));
+    QWidget::connect(startTest, SIGNAL (clicked()), this, SLOT (startTestAction()));
+    QWidget::connect(returnToUser, SIGNAL (clicked()), this, SLOT(returnFromTestPageToUserAction()));
+}
+
+void set::removeTestInterface()
+{
+    grid->removeWidget(setRepeatingMode);
+    grid->removeWidget(setLearningMode);
+    grid->removeWidget(setFromEngToRusMode);
+    grid->removeWidget(setFromRusToEngMode);
+    grid->removeWidget(startTest);
+    grid->removeWidget(word);
+    grid->removeWidget(returnToUser);
+
+    delete setRepeatingMode;
+    delete setLearningMode;
+    delete setFromEngToRusMode;
+    delete setFromRusToEngMode;
+    delete startTest;
+    delete word;
+    delete returnToUser;
+}
+
+
+
+void set::getTestSUBInterface()
+{
     nextWord = new QPushButton(this);
     nextWord->setText("Следующее");
+
     getTranslate = new QPushButton(this);
     getTranslate->setText("Не помню");
+
     testProgress = new QLabel(this);
     testProgress->setAlignment(Qt::AlignCenter);
     testProgress->setText("1/" + QString::number(numbOfWord < 10 ? numbOfWord : 10));
-    grid->addWidget(getTranslate, 5,0);
-    grid->addWidget(nextWord, 5,1);
-    grid->addWidget(testProgress,6,0,1,2);
+
+    grid->addWidget(getTranslate, 4,0);
+    grid->addWidget(nextWord, 4,1);
+    grid->addWidget(testProgress,5,0,1,2);
 
     QWidget::connect(getTranslate, SIGNAL (clicked()), this, SLOT (getTranslateAction()));
     QWidget::connect(nextWord, SIGNAL (clicked()), this, SLOT (getWordAction()));
@@ -190,10 +255,9 @@ void set::getTestInterface()
     testWord.remove(enWord);
     word->setText(enWord);
 
-
 }
 
-void set::removeTestInterface()
+void set::removeTestSUBInterface()
 {
     QWidget::disconnect(getTranslate, SIGNAL (clicked()), this, SLOT (getTranslateAction()));
     QWidget::disconnect(nextWord, SIGNAL (clicked()), this, SLOT (getWordAction()));
@@ -209,7 +273,16 @@ void set::removeTestInterface()
     word->clear();
 
     state = -1;
-    getWord->setDisabled(false);
+    startTest->setDisabled(false);
+    if (RusEng)
+        setFromRusToEngMode->setDisabled(false);
+    else
+        setFromEngToRusMode->setDisabled(false);
+
+    if (LearningRepeat)
+        setRepeatingMode->setDisabled(false);
+    else
+        setLearningMode->setDisabled(false);
 }
 
 void set::getWordListInterface()
@@ -351,12 +424,13 @@ void set::syncWithServer()
                     .arg(0);        //Слово не выучено
             if (a_query.exec(s))
             {
-                numbOfWord++;
+                //numbOfWord++;
                 qDebug() << "Добавлена новая пара слов в базу данных:" + ruLine + "---"+enLine;
             }
         }
     }
-    userInfo->setText(userNick + " : " + QString::number(numbOfWord) + " слов(а).");
+    getSumOfWords();
+    //userInfo->setText(userNick + " : " + QString::number(numbOfWord) + " слов(а).");
 }
 
 QString set::getFormatString(QString str)
@@ -366,9 +440,14 @@ QString set::getFormatString(QString str)
 }
 
 //Тестирование
-void set::startTest()
+void set::startTestAction()
 {
-    getWord->setDisabled(true);
+    //getWord->setDisabled(true);
+    startTest->setDisabled(true);
+    setRepeatingMode->setDisabled(true);
+    setLearningMode->setDisabled(true);
+    setFromRusToEngMode->setDisabled(true);
+    setFromEngToRusMode->setDisabled(true);
     if (numbOfWord != 0)
     {
         srand(time(NULL));
@@ -398,7 +477,7 @@ void set::startTest()
 
         //Включить интерфейс прохождения теста
         state = 0;
-        getTestInterface();
+        getTestSUBInterface();
     }
     else
         word->setText("База пуста");
@@ -418,7 +497,7 @@ void set::getWordAction()
         testProgress->setText(QString::number(state) + "/" + QString::number(numbOfWord < 10 ? numbOfWord : 10));
     }
     else
-        removeTestInterface();
+        removeTestSUBInterface();
 }
 
 void set::getTranslateAction()
@@ -426,6 +505,8 @@ void set::getTranslateAction()
     word->setText(ruWord);
 }
 
+
+//Авторизация
 void set::startAuthorization()
 {
     multiPart = new QHttpMultiPart(QHttpMultiPart::FormDataType);
@@ -500,26 +581,44 @@ void set::getAuthRequest()
         authInfo->setText("Логин не найден");
 }
 
+
+//Переход между окнами
+
+//Главный экран => обзор слов
 void set::showWordList()
 {
-    if (word->text() != "")
-        removeTestInterface();
     removeUserInterface();
     getWordListInterface();
 }
-
+//Обзор слов => главный экран
 void set::returnFromWordListToUserAction()
 {
     removeWordListInterface();
     getUserInterface();
 }
 
+
+void set::showTestPage()
+{
+    removeUserInterface();
+    getTestInterface();
+}
+
+void set::returnFromTestPageToUserAction()
+{
+    if (word->text() != "")
+        removeTestSUBInterface();
+    removeTestInterface();
+    getUserInterface();
+}
+
+
+//Работа с кнопками удаления\изменения группы
 void set::activateDeleteButton()
 {
     deleteWord->setDisabled(false);
     setAsLearned->setDisabled(false);
 }
-
 
 void set::deleteWordAction()
 {
@@ -535,8 +634,8 @@ void set::deleteWordAction()
         a_query.exec(s);
         //Перезаписываем
         //fillTheWordList();
+        getSumOfWords();
         showAllWordsAction();
-        numbOfWord--;
     }
 }
 
@@ -554,13 +653,18 @@ void set::setAsLearnedAction()
         a_query.exec(s);
         //Перезаписываем
         //fillTheWordList();
+        getSumOfWords();
         showAllWordsAction();
     }
 }
 
+
 //Показываем слова
 void set::showAllWordsAction()
 {
+    deleteWord->setDisabled(true);
+    setAsLearned->setDisabled(true);
+
     showAllWords->setDisabled(true);
     showNewWords->setDisabled(false);
     showLearnedWords->setDisabled(false);
@@ -580,6 +684,9 @@ void set::showAllWordsAction()
 
 void set::showNewWordsAction()
 {
+    deleteWord->setDisabled(true);
+    setAsLearned->setDisabled(true);
+
     showAllWords->setDisabled(false);
     showNewWords->setDisabled(true);
     showLearnedWords->setDisabled(false);
@@ -599,6 +706,9 @@ void set::showNewWordsAction()
 
 void set::showLearnedWordsAction()
 {
+    deleteWord->setDisabled(true);
+    setAsLearned->setDisabled(true);
+
     showAllWords->setDisabled(false);
     showNewWords->setDisabled(false);
     showLearnedWords->setDisabled(true);
@@ -616,3 +726,55 @@ void set::showLearnedWordsAction()
     }
 }
 
+
+//Настраиваем тестирование
+void set::setRepeatingModeAction()
+{
+    LearningRepeat = false;
+    setRepeatingMode->setDisabled(true);
+    setLearningMode->setDisabled(false);
+}
+
+void set::setLearningModeAction()
+{
+    LearningRepeat = true;
+    setRepeatingMode->setDisabled(false);
+    setLearningMode->setDisabled(true);
+}
+
+void set::setFromEngToRusModeAction()
+{
+    RusEng = true;
+    setFromEngToRusMode->setDisabled(true);
+    setFromRusToEngMode->setDisabled(false);
+}
+
+void set::setFromRusToEngModeAction()
+{
+    RusEng = false;
+    setFromEngToRusMode->setDisabled(false);
+    setFromRusToEngMode->setDisabled(true);
+}
+
+
+
+
+void set::getSumOfWords()
+{
+    numbOfWord = 0;
+    numbOfNewWord = 0;
+    //Посчитаем  количество слов в словаре
+
+    QSqlQuery a_query;
+    QString s = "SELECT * FROM word_table";
+    bool b = a_query.exec(s);
+    QSqlRecord rec = a_query.record();
+    if (!b)
+        qDebug() << "Не пошло считываие. word_table";
+    while (a_query.next())
+    {
+        numbOfWord++;
+        numbOfNewWord += a_query.value(rec.indexOf("learned")).toInt();
+    }
+    numbOfNewWord = numbOfWord - numbOfNewWord;
+}
